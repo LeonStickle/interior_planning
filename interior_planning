@@ -307,21 +307,22 @@
     <div class="spacer"></div>
     <label class="check-label"><input type="checkbox" id="snapToggle" checked> Snap to grid</label>
     <div class="seg">
-      <button id="unitFt" class="active">ft</button>
-      <button id="unitM">m</button>
+      <button id="unitFt">ft</button>
+      <button id="unitM" class="active">m</button>
     </div>
+    <button class="plain" id="exportBtn">Save image</button>
     <button class="plain" id="clearAllBtn">Clear all</button>
   </div>
 
   <div class="main">
     <div class="sidebar left">
       <h2>Room</h2>
-      <div class="field"><label>Width</label><input type="number" step="any" id="roomW" value="12"><span class="unit-suffix">ft</span></div>
-      <div class="field"><label>Height</label><input type="number" step="any" id="roomH" value="10"><span class="unit-suffix">ft</span></div>
+      <div class="field"><label>Width</label><input type="number" step="any" id="roomW" value="4"><span class="unit-suffix">m</span></div>
+      <div class="field"><label>Height</label><input type="number" step="any" id="roomH" value="3.5"><span class="unit-suffix">m</span></div>
       <button class="add-btn" id="addRoomBtn">+ Add room</button>
 
       <h2>Interior wall</h2>
-      <div class="field"><label>Length</label><input type="number" step="any" id="wallLen" value="8"><span class="unit-suffix">ft</span></div>
+      <div class="field"><label>Length</label><input type="number" step="any" id="wallLen" value="2.5"><span class="unit-suffix">m</span></div>
       <div class="field">
         <label>Type</label>
         <select id="wallOrient">
@@ -333,8 +334,8 @@
 
       <h2>Custom furniture</h2>
       <div class="field"><label>Name</label><input type="text" id="custName" value="Item" style="font-family:'Inter',sans-serif;"></div>
-      <div class="field"><label>Width</label><input type="number" step="any" id="custW" value="2"><span class="unit-suffix">ft</span></div>
-      <div class="field"><label>Depth</label><input type="number" step="any" id="custD" value="2"><span class="unit-suffix">ft</span></div>
+      <div class="field"><label>Width</label><input type="number" step="any" id="custW" value="0.6"><span class="unit-suffix">m</span></div>
+      <div class="field"><label>Depth</label><input type="number" step="any" id="custD" value="0.6"><span class="unit-suffix">m</span></div>
       <button class="add-btn" id="addCustomBtn">+ Add furniture</button>
     </div>
 
@@ -360,10 +361,10 @@
 
   // ---------- constants ----------
   const M_PER_FT = 0.3048;
-  const PPF = 26;          // pixels per foot
+  const PPF = 85;          // pixels per metre (internal base unit is metres)
   const MARGIN = 30;       // ruler gutter, px
   const VB_W = 1060, VB_H = 740;
-  const WALL_FT = 0.35;    // standard interior wall thickness
+  const WALL_FT = 0.10;    // standard interior wall thickness, metres
   const WALL_PX = WALL_FT * PPF;
 
   const COLORS = {
@@ -374,40 +375,42 @@
 
   const FURNITURE_PRESETS = {
     'Living Room': [
-      {name:'Sofa (3-seat)', w:7, d:3, shape:'sofa'},
-      {name:'Loveseat', w:5, d:3, shape:'sofa'},
-      {name:'Armchair', w:3, d:3, shape:'chair'},
-      {name:'Coffee Table', w:4, d:2, shape:'box'},
-      {name:'TV Stand', w:5, d:1.5, shape:'box'},
+      {name:'Sofa (3-seat)', w:2.0, d:0.9, shape:'sofa'},
+      {name:'Loveseat', w:1.6, d:0.9, shape:'sofa'},
+      {name:'Sofa with Chaise', w:2.6, d:1.6, shape:'chaise'},
+      {name:'Armchair', w:0.9, d:0.9, shape:'chair'},
+      {name:'Coffee Table', w:1.1, d:0.55, shape:'box'},
+      {name:'TV Stand', w:1.5, d:0.4, shape:'box'},
     ],
     'Bedroom': [
-      {name:'Queen Bed', w:5, d:6.67, shape:'bed'},
-      {name:'King Bed', w:6.33, d:6.67, shape:'bed'},
-      {name:'Twin Bed', w:3.25, d:6.33, shape:'bed'},
-      {name:'Nightstand', w:2, d:1.5, shape:'box'},
-      {name:'Dresser', w:5, d:1.5, shape:'box'},
-      {name:'Wardrobe', w:4, d:2, shape:'box'},
+      {name:'Single Bed', w:0.9, d:2.0, shape:'bed'},
+      {name:'Double Bed', w:1.4, d:2.0, shape:'bed'},
+      {name:'Queen Bed', w:1.6, d:2.0, shape:'bed'},
+      {name:'King Bed', w:1.8, d:2.0, shape:'bed'},
+      {name:'Nightstand', w:0.45, d:0.35, shape:'box'},
+      {name:'Dresser', w:1.2, d:0.45, shape:'box'},
+      {name:'Wardrobe', w:1.0, d:0.6, shape:'box'},
     ],
     'Kitchen & Dining': [
-      {name:'Dining Table (6)', w:6, d:3, shape:'box'},
-      {name:'Dining Table (4)', w:4, d:3, shape:'box'},
-      {name:'Kitchen Island', w:6, d:3, shape:'box'},
-      {name:'Refrigerator', w:3, d:2.5, shape:'box'},
-      {name:'Range / Stove', w:2.5, d:2.5, shape:'box'},
+      {name:'Dining Table (6)', w:1.8, d:0.9, shape:'box'},
+      {name:'Dining Table (4)', w:1.2, d:0.9, shape:'box'},
+      {name:'Kitchen Island', w:1.8, d:0.9, shape:'box'},
+      {name:'Refrigerator', w:0.9, d:0.75, shape:'box'},
+      {name:'Range / Stove', w:0.6, d:0.6, shape:'box'},
     ],
     'Bathroom': [
-      {name:'Bathtub', w:5, d:2.5, shape:'tub'},
-      {name:'Toilet', w:2, d:2.5, shape:'toilet'},
-      {name:'Vanity Sink', w:3, d:2, shape:'sink'},
+      {name:'Bathtub', w:1.7, d:0.75, shape:'tub'},
+      {name:'Toilet', w:0.4, d:0.65, shape:'toilet'},
+      {name:'Vanity Sink', w:0.9, d:0.55, shape:'sink'},
     ],
     'Office': [
-      {name:'Desk', w:5, d:2.5, shape:'box'},
-      {name:'Office Chair', w:2, d:2, shape:'chair'},
+      {name:'Desk', w:1.4, d:0.7, shape:'box'},
+      {name:'Office Chair', w:0.6, d:0.6, shape:'chair'},
     ],
   };
 
   // ---------- state ----------
-  let unit = 'ft';
+  let unit = 'm'; // internal storage is always in metres; 'unit' only affects display
   let snap = true;
   let elements = [];
   let selId = null;
@@ -419,9 +422,9 @@
 
   // ---------- helpers ----------
   function round2(v){ return Math.round(v*100)/100; }
-  function ftToDisp(ft){ return unit==='ft' ? ft : ft*M_PER_FT; }
-  function dispToFt(v){ return unit==='ft' ? v : v/M_PER_FT; }
-  function fmt(ft){ return round2(ftToDisp(ft)) + (unit==='ft' ? ' ft' : ' m'); }
+  function ftToDisp(m){ return unit==='m' ? m : m/M_PER_FT; }
+  function dispToFt(v){ return unit==='m' ? v : v*M_PER_FT; }
+  function fmt(m){ return round2(ftToDisp(m)) + (unit==='m' ? ' m' : ' ft'); }
   function snapVal(v){ return snap ? Math.round(v*2)/2 : Math.round(v*20)/20; }
   function getPlanSize(){ return { w:(VB_W-MARGIN)/PPF, h:(VB_H-MARGIN)/PPF }; }
   function escapeHtml(s){
@@ -448,6 +451,18 @@
           <rect x="${-hw}" y="${-hh}" width="${Math.max(4,w*0.13)}" height="${h}" fill-opacity="0.18" stroke="none"/>
           <rect x="${hw-Math.max(4,w*0.13)}" y="${-hh}" width="${Math.max(4,w*0.13)}" height="${h}" fill-opacity="0.18" stroke="none"/>
           <line x1="${-hw+w*0.13}" y1="${-hh+h*0.32}" x2="${hw-w*0.13}" y2="${-hh+h*0.32}" stroke-width="1"/>`;
+      case 'chaise': {
+        const bodyDepth = h*0.52;
+        const chaiseW = w*0.38;
+        const pts = [
+          [-hw,-hh], [hw,-hh], [hw,hh], [hw-chaiseW,hh],
+          [hw-chaiseW,-hh+bodyDepth], [-hw,-hh+bodyDepth]
+        ].map(p=>p.join(',')).join(' ');
+        return `<polygon points="${pts}"/>
+          <line x1="${-hw}" y1="${-hh+bodyDepth}" x2="${hw-chaiseW}" y2="${-hh+bodyDepth}" stroke-width="1" opacity="0.5"/>
+          <line x1="${hw-chaiseW}" y1="${-hh+bodyDepth}" x2="${hw-chaiseW}" y2="${hh}" stroke-width="1" opacity="0.5"/>
+          <rect x="${-hw}" y="${-hh}" width="${Math.max(4,w*0.08)}" height="${bodyDepth}" fill-opacity="0.18" stroke="none"/>`;
+      }
       case 'chair':
         return `<rect x="${-hw}" y="${-hh}" width="${w}" height="${h}" rx="6"/>
           <rect x="${-hw+2}" y="${-hh}" width="${w-4}" height="${Math.max(3,h*0.26)}" rx="3" fill-opacity="0.18" stroke="none"/>`;
@@ -717,7 +732,7 @@
 
   const libHtml = Object.entries(FURNITURE_PRESETS).map(([cat, items])=>`
     <div class="cat"><h4>${escapeHtml(cat)}</h4><div class="preset-grid">
-    ${items.map((p,i)=>`<button class="preset-btn" data-cat="${escapeHtml(cat)}" data-idx="${i}">${escapeHtml(p.name)}<br><span class="dims">${p.w}×${p.d} ft</span></button>`).join('')}
+    ${items.map((p,i)=>`<button class="preset-btn" data-cat="${escapeHtml(cat)}" data-idx="${i}">${escapeHtml(p.name)}<br><span class="dims">${p.w}×${p.d} m</span></button>`).join('')}
     </div></div>`).join('');
   document.getElementById('furnitureLib').innerHTML = libHtml;
   document.getElementById('furnitureLib').addEventListener('click', evt=>{
@@ -733,6 +748,46 @@
   });
 
   document.getElementById('snapToggle').addEventListener('change', e=>{ snap = e.target.checked; });
+
+  function exportPng(){
+    const wasSel = selId;
+    selId = null;
+    renderCanvas(); // hide selection handles for a clean export
+    const serializer = new XMLSerializer();
+    let svgStr = serializer.serializeToString(svg);
+    svgStr = svgStr.replace('<svg ', `<svg width="${VB_W}" height="${VB_H}" `);
+    const scale = 2;
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      canvas.width = VB_W*scale;
+      canvas.height = VB_H*scale;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = COLORS.paper;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.scale(scale,scale);
+      ctx.drawImage(img,0,0);
+      canvas.toBlob(function(blob){
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'floor-plan.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        selId = wasSel;
+        render();
+      }, 'image/png');
+    };
+    img.onerror = function(){
+      alert('Sorry, the image could not be exported.');
+      selId = wasSel;
+      render();
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  }
+  document.getElementById('exportBtn').addEventListener('click', exportPng);
 
   document.getElementById('clearAllBtn').addEventListener('click', ()=>{
     if(elements.length && !confirm('Clear the entire floor plan? This cannot be undone.')) return;
@@ -758,7 +813,7 @@
   document.getElementById('unitM').addEventListener('click', ()=>setUnit('m'));
 
   // ---------- initial state: a starter room ----------
-  elements.push({id:nextId++, type:'room', x:2, y:2, w:14, h:11});
+  elements.push({id:nextId++, type:'room', x:0.6, y:0.6, w:4.2, h:3.4});
   render();
 })();
 </script>
